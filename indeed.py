@@ -4,7 +4,6 @@ import csv
 import cloudscraper
 from bs4 import BeautifulSoup
 
-
 # headers for the request
 headers = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.111 Safari/537.36",
@@ -49,7 +48,7 @@ def get_job_info():
         else:
             job_type = job_type.text.strip()
 
-        job_last_update = job.find("span", {"class": "date"}).text.strip()
+        job_last_update = job.find("span", {"class": "date"}).text.strip().replace("Posted", "")
 
         job_data.append(
             {
