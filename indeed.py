@@ -16,7 +16,7 @@ offer = input("Enter the job you want to search for: ").strip()
 country = input("Enter the country you want to search in: ").strip()
 scraper = cloudscraper.create_scraper(delay=10, browser="chrome")
 page = scraper.get(
-    f"https://ma.indeed.com/jobs?q={offer.replace(' ','+')}&l={country.replace(' ','+')}",
+    f"https://ma.indeed.com/jobs?q={offer.replace(' ','+')}&l={country.replace(' ','+')}&sort=date",
     headers=headers,
 )
 
@@ -63,9 +63,12 @@ def get_job_info():
 
 get_job_info()
 # save the data in a csv file
-keys = job_data[0].keys()
-with open("jobs.csv", "w", newline="", encoding="utf-8") as csv_file:
-    writer = csv.DictWriter(csv_file, keys)
-    writer.writeheader()
-    writer.writerows(job_data)
-    print("======file created successfully======")
+if len(job_data) == 0:
+    print("No job found, try again")
+else:
+    keys = job_data[0].keys()
+    with open("jobs.csv", "w", newline="", encoding="utf-8") as csv_file:
+        writer = csv.DictWriter(csv_file, keys)
+        writer.writeheader()
+        writer.writerows(job_data)
+        print("======file created successfully======")
