@@ -16,7 +16,7 @@ offer = input("Enter the job you want to search for: ").strip()
 country = input("Enter the country you want to search in: ").strip()
 scraper = cloudscraper.create_scraper(delay=10, browser="chrome")
 page = scraper.get(
-    f"https://indeed.com/jobs?q={offer.replace(' ','+')}&l={country.replace(' ','+')}",
+    f"https://ma.indeed.com/jobs?q={offer.replace(' ','+')}&l={country.replace(' ','+')}",
     headers=headers,
 )
 
@@ -42,11 +42,11 @@ def get_job_info():
             job_company = job_company.text.strip()
         job_description = job.find("div", {"class": "job-snippet"}).text.strip()
 
-        job_type = job.find("div", {"class": "attribute_snippet"})
-        if job_type is None:
-            job_type = "Not specified"
+        job_salary = job.find("div", {"class": "salary-snippet-container"})
+        if job_salary is None:
+            job_salary = "Not specified"
         else:
-            job_type = job_type.text.strip()
+            job_salary = job_salary.text.strip()
 
         job_last_update = job.find("span", {"class": "date"}).text.strip().replace("Posted", "")
 
@@ -55,7 +55,7 @@ def get_job_info():
                 "Job title": job_title,
                 "Company": job_company,
                 "Description": job_description,
-                "Job type": job_type,
+                "Job salary": job_salary,
                 "Last update": job_last_update,
             }
         )
