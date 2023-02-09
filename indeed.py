@@ -1,5 +1,6 @@
 """This script scrapes job offers from indeed.com"""
 import csv
+import sys
 
 import cloudscraper
 from bs4 import BeautifulSoup
@@ -12,56 +13,67 @@ headers = {
     "Connection": "keep-alive",
     "Accept-Encoding": "gzip, deflate",
 }
+scraper = cloudscraper.create_scraper(delay=10, browser="chrome")
+
 offer = input("Enter the job you want to search for: ").strip()
 country = input("Enter the country you want to search in: ").strip()
-scraper = cloudscraper.create_scraper(delay=10, browser="chrome")
-page = scraper.get(
-    f"https://ma.indeed.com/jobs?q={offer.replace(' ','+')}&l={country.replace(' ','+')}&sort=date",
-    headers=headers,
-)
+num_pages = int(input("Enter the number of pages you want to scrape: "))
 
-
-print("======please wait======")
 job_data = []
+# just for the loading animation
+print("Loading:")
+animation = "|/-\\"
+for i in range(num_pages):
+    sys.stdout.write("\r" + animation[i % len(animation)])
+    sys.stdout.flush()
+    page = scraper.get(
+        f"https://ma.indeed.com/jobs?q={offer.replace(' ','+')}&l={country.replace(' ','+')}&sort=date&start={str(i*10)}",
+        headers=headers,
+    )
 
+    def get_job_info():
+        """This function gets the job information"""
+        soup = BeautifulSoup(page.content, "lxml")
+        # get the job offers
+        job_offer = soup.find_all("div", {"class": "cardOutline"})
+        for job in job_offer:
+            job_title = job.find("h2", {"class": "jobTitle"}).text.strip()
+            # get the company name
+            job_company = job.find("div", {"class": "company_location"}).find(
+                "span", {"class": "companyName"}
+            )
+            if job_company is None:
+                job_company = "Not specified"
+            else:
+                job_company = job_company.text.strip()
+            # get the job description
+            job_description = job.find("div", {"class": "job-snippet"}).text.strip()
+            # get the job salary
+            job_salary = job.find("div", {"class": "salary-snippet-container"})
+            if job_salary is None:
+                job_salary = "Not specified"
+            else:
+                job_salary = job_salary.text.strip()
+            # get the last update
+            job_last_update = (
+                job.find("span", {"class": "date"}).text.strip().replace("Posted", "")
+            )
+            job_link = "https://ma.indeed.com" + (
+                job.find("a", {"class": "jcs-JobTitle"}).get("href")
+            )
+            # append the data to the list
+            job_data.append(
+                {
+                    "Job title": job_title,
+                    "Company": job_company,
+                    "Description": job_description,
+                    "Job salary": job_salary,
+                    "Last update": job_last_update,
+                    "Job link": job_link,
+                }
+            )
 
-def get_job_info():
-    """This function gets the job information"""
-    soup = BeautifulSoup(page.content, "lxml")
-
-    job_offer = soup.find_all("div", {"class": "cardOutline"})
-    for job in job_offer:
-        job_title = job.find("h2", {"class": "jobTitle"}).text.strip()
-
-        job_company = job.find("div", {"class": "company_location"}).find(
-            "span", {"class": "companyName"}
-        )
-        if job_company is None:
-            job_company = "Not specified"
-        else:
-            job_company = job_company.text.strip()
-        job_description = job.find("div", {"class": "job-snippet"}).text.strip()
-
-        job_salary = job.find("div", {"class": "salary-snippet-container"})
-        if job_salary is None:
-            job_salary = "Not specified"
-        else:
-            job_salary = job_salary.text.strip()
-
-        job_last_update = job.find("span", {"class": "date"}).text.strip().replace("Posted", "")
-
-        job_data.append(
-            {
-                "Job title": job_title,
-                "Company": job_company,
-                "Description": job_description,
-                "Job salary": job_salary,
-                "Last update": job_last_update,
-            }
-        )
-
-
-get_job_info()
+    get_job_info()
 # save the data in a csv file
 if len(job_data) == 0:
     print("No job found, try again")
